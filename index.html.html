@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Workout"/>
+<meta name="theme-color" content="#2D6A56"/>
+<title>Workout Companion</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F7FBF9;overscroll-behavior:none;user-select:none;}
+button{font-family:inherit;touch-action:manipulation;cursor:pointer;}
+#app{min-height:100vh;min-height:100dvh;}
+
+/* ANIMATIONS */
+@keyframes squat{0%,100%{transform:translateY(0)}50%{transform:translateY(18px)}}
+@keyframes press{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes curl{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-55deg)}}
+@keyframes row{0%,100%{transform:translateX(0)}50%{transform:translateX(10px)}}
+@keyframes deadlift{0%,100%{transform:rotate(0deg)}50%{transform:rotate(28deg)}}
+@keyframes lunge{0%,100%{transform:translateY(0)}50%{transform:translateY(12px)}}
+@keyframes walk{0%,100%{transform:rotate(0deg)}25%{transform:rotate(8deg)}75%{transform:rotate(-8deg)}}
+@keyframes lateral{0%,100%{transform:translateX(0)}50%{transform:translateX(16px)}}
+@keyframes clam{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-30deg)}}
+@keyframes legrise{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-40deg)}}
+@keyframes deadbug{0%,100%{transform:rotate(0deg)}50%{transform:rotate(20deg)}}
+@keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes plankpulse{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.97)}}
+@keyframes sideplanpulse{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-2deg)}}
+
+.fig-idle{animation:idle 2s ease-in-out infinite}
+.fig-squat{animation:squat 1.4s ease-in-out infinite}
+.fig-press{animation:press 1.4s ease-in-out infinite}
+.fig-curl-arm{animation:curl 1.4s ease-in-out infinite}
+.fig-row-arm{animation:row 1.4s ease-in-out infinite}
+.fig-deadlift{animation:deadlift 1.4s ease-in-out infinite}
+.fig-lunge{animation:lunge 1.4s ease-in-out infinite}
+.fig-walk-arm{animation:walk 1.2s ease-in-out infinite}
+.fig-walk-leg{animation:walk 1.2s ease-in-out infinite}
+.fig-lateral-arm{animation:lateral 1.4s ease-in-out infinite}
+.fig-clam-leg{animation:clam 1.4s ease-in-out infinite}
+.fig-legrise-leg{animation:legrise 1.4s ease-in-out infinite}
+.fig-deadbug-arm{animation:deadbug 1.4s ease-in-out infinite}
+.fig-deadbug-leg{animation:deadbug 1.4s ease-in-out infinite reverse}
+.fig-plank{animation:plankpulse 1.4s ease-in-out infinite}
+.fig-sideplan{animation:sideplanpulse 1.4s ease-in-out infinite}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;min-height:100vh;min-height:100dvh;}
+.screen.active{display:flex;}
+
+/* SELECT */
+.select-header{padding:44px 24px 20px;text-align:center;background:linear-gradient(160deg,#F7FBF9 0%,#EEF6FF 100%);}
+.select-label{font-size:11px;letter-spacing:3px;color:#9BBEAF;text-transform:uppercase;margin-bottom:8px;}
+.select-title{font-size:26px;font-weight:800;color:#1A2E26;letter-spacing:-0.5px;margin-bottom:6px;}
+.select-sub{color:#7A9A8A;font-size:14px;}
+.workout-cards{padding:0 18px;display:flex;flex-direction:column;gap:14px;background:linear-gradient(160deg,#F7FBF9 0%,#EEF6FF 100%);flex:1;}
+.workout-card{background:white;border:none;border-radius:20px;padding:18px 20px;text-align:left;box-shadow:0 2px 14px rgba(0,0,0,0.07);display:flex;gap:14px;align-items:center;position:relative;overflow:hidden;width:100%;}
+.card-stripe{position:absolute;top:0;left:0;bottom:0;width:5px;border-radius:20px 0 0 20px;}
+.card-body{padding-left:8px;flex:1;}
+.card-emoji{font-size:20px;}
+.card-name{font-size:16px;font-weight:800;color:#1A2E26;margin-top:2px;}
+.card-meta{font-size:12px;color:#7A9A8A;margin-top:3px;}
+.pwa-hint{margin:20px 18px;background:white;border-radius:16px;padding:14px 16px;box-shadow:0 1px 8px rgba(0,0,0,0.05);}
+.pwa-title{font-size:12px;font-weight:700;color:#5A8A7A;margin-bottom:6px;}
+.pwa-text{font-size:12px;color:#888;line-height:1.7;}
+
+/* WORKOUT */
+.workout-topbar{padding:14px 18px 0;display:flex;align-items:center;gap:10px;}
+.exit-btn{background:rgba(0,0,0,0.07);border:none;border-radius:10px;padding:7px 13px;font-size:12px;color:#555;}
+.topbar-right{flex:1;}
+.workout-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:700;}
+.progress-bar-bg{height:4px;background:#DDD;border-radius:10px;margin-top:4px;overflow:hidden;}
+.progress-bar-fill{height:100%;border-radius:10px;transition:width 0.5s;}
+
+.ex-title-area{padding:12px 20px 0;text-align:center;}
+.ex-name{font-size:22px;font-weight:800;color:#1A2E26;}
+.ex-meta{font-size:13px;font-weight:600;margin-top:3px;}
+
+.figure-timer-row{display:flex;align-items:center;justify-content:center;gap:16px;padding:10px 20px 4px;}
+.figure-box{background:white;border-radius:20px;padding:10px 14px;box-shadow:0 2px 12px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;min-width:130px;min-height:120px;}
+
+.phase-hint{text-align:center;min-height:22px;margin-bottom:4px;font-size:12px;color:#999;}
+
+.controls{display:flex;gap:10px;justify-content:center;padding:0 20px 10px;}
+.btn-pause{flex:1;max-width:130px;border-radius:14px;padding:12px 0;font-size:14px;font-weight:700;border-width:2px;border-style:solid;}
+.btn-skip{flex:1;max-width:130px;background:white;color:#666;border:2px solid #DDD;border-radius:14px;padding:12px 0;font-size:14px;font-weight:700;}
+
+.info-card{margin:0 14px;background:white;border-radius:18px;padding:12px 14px;box-shadow:0 2px 10px rgba(0,0,0,0.06);flex:1;overflow:auto;}
+.muscles-label{font-size:10px;color:#BBB;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+.muscle-tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;margin:2px 3px 2px 0;}
+.muscle-legend{font-size:9px;color:#CCC;margin-top:5px;}
+.legend-dot{border-radius:3px;padding:1px 5px;margin-right:3px;}
+.tip-label{font-size:10px;color:#BBB;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;margin-top:8px;}
+.tip-text{font-size:13px;color:#444;line-height:1.65;margin:0;}
+.divider{border-top:1px solid #F0F0F0;padding-top:8px;margin-top:2px;}
+
+.bottom-counter{padding:10px 18px 20px;display:flex;align-items:center;justify-content:space-between;}
+.counter-label{font-size:12px;color:#999;}
+.dots-row{display:flex;gap:5px;align-items:center;}
+.ex-dot{border-radius:50%;transition:all 0.3s;}
+.remaining-num{margin-left:6px;font-size:18px;font-weight:800;}
+
+/* DONE */
+.done-screen-unused{}
+.done-emoji{font-size:60px;margin-bottom:14px;}
+.done-title{font-size:28px;font-weight:800;color:#1A2E26;margin-bottom:6px;}
+.done-sub{color:#5A8A7A;font-size:15px;margin-bottom:20px;}
+.done-btn{margin-top:24px;background:#2D6A56;color:white;border:none;border-radius:16px;padding:14px 36px;font-size:16px;font-weight:700;}
+
+/* CIRCLE TIMER */
+.timer-wrap{position:relative;width:130px;height:130px;}
+.timer-svg{transform:rotate(-90deg);}
+.timer-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.timer-num{font-size:34px;font-weight:800;color:#1A1A2E;line-height:1;}
+.timer-phase{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SELECT SCREEN -->
+<div class="screen active" id="screen-select">
+  <div class="select-header">
+    <div class="select-label">Programul tău</div>
+    <div class="select-title">Alege antrenamentul</div>
+    <div class="select-sub">Silueta antrenează împreună cu tine</div>
+  </div>
+  <div class="workout-cards" id="workout-cards"></div>
+  <div class="pwa-hint">
+    <div class="pwa-title">📱 Salvează ca aplicație</div>
+    <div class="pwa-text">
+      <strong>iPhone:</strong> Safari → Share → "Adaugă pe ecran principal"<br/>
+      <strong>Android:</strong> Chrome → meniu → "Adaugă pe ecranul principal"
+    </div>
+  </div>
+</div>
+
+<!-- WORKOUT SCREEN -->
+<div class="screen" id="screen-workout">
+  <div class="workout-topbar">
+    <button class="exit-btn" onclick="goSelect()">← Ieși</button>
+    <div class="topbar-right">
+      <div class="workout-label" id="w-label"></div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="w-progress"></div></div>
+    </div>
+  </div>
+  <div class="ex-title-area">
+    <div class="ex-name" id="ex-name"></div>
+    <div class="ex-meta" id="ex-meta"></div>
+  </div>
+  <div class="figure-timer-row">
+    <div class="figure-box"><svg id="figure-svg" viewBox="0 0 100 110" width="110" height="110"></svg></div>
+    <div class="timer-wrap">
+      <svg class="timer-svg" width="130" height="130">
+        <circle cx="65" cy="65" r="52" fill="none" stroke="#E8E8E8" stroke-width="8"/>
+        <circle id="timer-arc" cx="65" cy="65" r="52" fill="none" stroke="#7DBAAA" stroke-width="8"
+          stroke-dasharray="326.7" stroke-dashoffset="0" style="stroke-linecap:round;transition:stroke-dashoffset 0.9s linear"/>
+      </svg>
+      <div class="timer-inner">
+        <div class="timer-num" id="timer-num">5</div>
+        <div class="timer-phase" id="timer-phase">Gata?</div>
+      </div>
+    </div>
+  </div>
+  <div class="phase-hint" id="phase-hint"></div>
+  <div class="controls">
+    <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸ Pauză</button>
+    <button class="btn-skip" onclick="skipPhase()">Skip ⏭</button>
+  </div>
+  <div class="info-card">
+    <div class="muscles-label">Grupe musculare</div>
+    <div id="muscle-tags"></div>
+    <div class="muscle-legend">
+      <span class="legend-dot" style="background:#2D6A56;color:white">■</span>Primar &nbsp;
+      <span class="legend-dot" style="background:#B8DDD4">■</span>Secundar
+    </div>
+    <div class="divider">
+      <div class="tip-label">Execuție</div>
+      <p class="tip-text" id="ex-tip"></p>
+    </div>
+  </div>
+  <div class="bottom-counter">
+    <div class="counter-label">Exerciții rămase</div>
+    <div class="dots-row" id="dots-row"></div>
+  </div>
+</div>
+
+<!-- DONE SCREEN -->
+<div class="screen" id="screen-done" style="background:linear-gradient(160deg,#F0FAF7 0%,#E8F5FF 100%);flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;">
+  <div class="done-emoji">🎉</div>
+  <div class="done-title">Antrenament terminat!</div>
+  <div class="done-sub">Ai finalizat toate exercițiile. Excelent!</div>
+  <svg viewBox="0 0 100 110" width="110" height="110">
+    <g class="fig-idle" style="transform-origin:50px 60px">
+      <circle cx="50" cy="14" r="10" fill="#2D6A56"/>
+      <line x1="50" y1="24" x2="50" y2="30" stroke="#2D6A56" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="50" y1="30" x2="50" y2="65" stroke="#2D6A56" stroke-width="4" stroke-linecap="round"/>
+      <line x1="50" y1="42" x2="30" y2="55" stroke="#2D6A56" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="30" y1="55" x2="26" y2="68" stroke="#2D6A56" stroke-width="3" stroke-linecap="round"/>
+      <line x1="50" y1="42" x2="70" y2="55" stroke="#2D6A56" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="70" y1="55" x2="74" y2="68" stroke="#2D6A56" stroke-width="3" stroke-linecap="round"/>
+      <line x1="50" y1="65" x2="40" y2="88" stroke="#2D6A56" stroke-width="4" stroke-linecap="round"/>
+      <line x1="40" y1="88" x2="36" y2="100" stroke="#2D6A56" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="50" y1="65" x2="60" y2="88" stroke="#2D6A56" stroke-width="4" stroke-linecap="round"/>
+      <line x1="60" y1="88" x2="64" y2="100" stroke="#2D6A56" stroke-width="3.5" stroke-linecap="round"/>
+    </g>
+  </svg>
+  <button class="done-btn" onclick="goSelect()">Înapoi la selectare</button>
+</div>
+
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const WORKOUTS = {
+  "Upper Body + Abdomen":{
+    color:"#7DBAAA",accent:"#2D6A56",bg:"#F0FAF7",emoji:"💪",
+    exercises:[
+      {name:"Chest Press",sets:3,reps:"12",workSec:45,restSec:60,weight:"2 × 5 kg",primary:["Piept"],secondary:["Triceps","Umeri"],tip:"Coboară ganterele lent 2 sec, coatele la 45°. Nu lăsa coatele să cadă complet pe podea.",anim:"press"},
+      {name:"Shoulder Press",sets:3,reps:"10",workSec:40,restSec:60,weight:"2 × 5 kg",primary:["Umeri"],secondary:["Triceps","Trapez"],tip:"Spatele drept pe scaun. Expiră când ridici, nu ridica umerii spre urechi.",anim:"press"},
+      {name:"Ramat un braț",sets:3,reps:"10/braț",workSec:50,restSec:45,weight:"5 kg / braț",primary:["Spate lat"],secondary:["Biceps","Romboid"],tip:"Mâna liberă sprijinită pe pat. Trage cotul spre tavan, nu ridica umărul.",anim:"row"},
+      {name:"Biceps Curl",sets:3,reps:"12",workSec:40,restSec:45,weight:"2 × 5 kg",primary:["Biceps"],secondary:["Antebraț"],tip:"Coatele lipite de corp. Nu balansa trunchiul. Coboară lent 2 sec.",anim:"curl"},
+      {name:"Triceps Overhead",sets:3,reps:"12",workSec:40,restSec:45,weight:"5 kg (2 mâini)",primary:["Triceps"],secondary:["Umeri post."],tip:"Coatele fixe lângă cap. Coboară gantera în spatele capului, 2 sec.",anim:"press"},
+      {name:"Lateral Raises",sets:3,reps:"12",workSec:40,restSec:45,weight:"2 × 5 kg",primary:["Umeri laterali"],secondary:["Trapez"],tip:"Nu ridica deasupra umerilor. Coboară lent 3 sec. Un singur braț dacă e greu.",anim:"lateral"},
+      {name:"Dead Bug",sets:3,reps:"8/parte",workSec:50,restSec:30,weight:"Greutatea corpului",primary:["Abdomen profund"],secondary:["Lombari"],tip:"Lombarul lipit de podea TOT TIMPUL. 3 sec per mișcare. Micșorează amplitudinea dacă se ridică spatele.",anim:"deadbug"},
+      {name:"Reverse Crunch",sets:3,reps:"12",workSec:40,restSec:45,weight:"Greutatea corpului",primary:["Abdomen inferior"],secondary:["Iliopsoas"],tip:"Ridici bazinul spre tavan, nu picioarele. Coboară controlat. Mișcarea vine din abdomen.",anim:"legrise"},
+      {name:"Plank",sets:3,reps:"35 sec",workSec:35,restSec:45,weight:"Greutatea corpului",primary:["Core"],secondary:["Fese","Umeri"],tip:"Corp drept ca o scândură. Abdomen contractat, fese strânse. Respiră constant.",anim:"plank"},
+    ]
+  },
+  "Lower Body Intens":{
+    color:"#E8847A",accent:"#C05A50",bg:"#FDF2F1",emoji:"🦵",
+    exercises:[
+      {name:"Squat cu gantere",sets:3,reps:"15",workSec:55,restSec:90,weight:"2 × 5 kg",primary:["Cvadriceps","Fese"],secondary:["Ischiogambieri","Core"],tip:"3 sec coborâre, 1 sec pauză jos, 2 sec ridicare. Greutatea pe călcâie. Genunchii în linie cu vârfurile.",anim:"squat"},
+      {name:"Romanian Deadlift",sets:3,reps:"12",workSec:50,restSec:90,weight:"2 × 5 kg",primary:["Ischiogambieri","Fese"],secondary:["Spate inferior","Core"],tip:"3 sec coborâre lentă. Ganterele alunecă pe tibie. Spatele drept tot timpul — nu rotunzi.",anim:"deadlift"},
+      {name:"Sumo Squat",sets:3,reps:"15",workSec:55,restSec:75,weight:"1 × 5 kg",primary:["Inner thighs","Fese"],secondary:["Cvadriceps"],tip:"Picioarele depărtate, vârfurile la 45°. 2 sec jos, 2 sec sus. Spatele drept tot timpul.",anim:"squat"},
+      {name:"Glute Bridge + bandă",sets:3,reps:"15",workSec:55,restSec:75,weight:"Bandă elastică",primary:["Fese mari","Fese mijlocii"],secondary:["Ischiogambieri","Core"],tip:"Bandă deasupra genunchilor. Împinge genunchii afară. Ține 2 sec sus. Coboară lent 2 sec.",anim:"squat"},
+      {name:"Step Back Lunges",sets:3,reps:"10/picior",workSec:60,restSec:75,weight:"Greutatea corpului",primary:["Cvadriceps","Fese"],secondary:["Ischiogambieri","Gambe"],tip:"Pasul din spate pe vârful piciorului. Genunchiul din spate aproape de podea. Trunchiul drept.",anim:"lunge"},
+      {name:"Lateral Band Walk",sets:2,reps:"15 pași/dir.",workSec:40,restSec:60,weight:"Bandă elastică",primary:["Abductori șold","Fese mijlocii"],secondary:["Cvadriceps"],tip:"Ușor îndoită în genunchi tot timpul. Pași egali lateral. Nu lăsa genunchii să se prăbușească înăuntru.",anim:"walk"},
+      {name:"Clamshell + bandă",sets:2,reps:"15/parte",workSec:45,restSec:60,weight:"Bandă elastică",primary:["Abductori șold","Fese mijlocii"],secondary:["Inner thighs"],tip:"Pe o parte, genunchi la 90°. Deschide ca o scoică fără să rotești bazinul. Ține 1 sec sus.",anim:"clam"},
+      {name:"Mers alert (drenaj)",sets:1,reps:"8 min",workSec:480,restSec:0,weight:"—",primary:["Drenaj activ"],secondary:["Circulație"],tip:"OBLIGATORIU după lower body. Mergi lent și constant. Reduce inflamația și durerea musculară de mâine.",anim:"walk"},
+    ]
+  },
+  "Upper Body Ușor + Abdomen":{
+    color:"#9BB5E8",accent:"#5878C0",bg:"#F1F4FD",emoji:"🌿",
+    exercises:[
+      {name:"Push-ups / Incline",sets:2,reps:"10",workSec:35,restSec:60,weight:"Greutatea corpului",primary:["Piept"],secondary:["Triceps","Umeri ant."],tip:"Dacă e greu, mâinile pe pat (incline). Corp drept, abdomen activ. 2 sec coborâre, 1 sec sus.",anim:"press"},
+      {name:"Arnold Press",sets:2,reps:"10",workSec:40,restSec:60,weight:"2 × 5 kg",primary:["Umeri (toate)"],secondary:["Triceps"],tip:"Începi cu palmele spre tine, rotești în timp ce ridici. Lent și controlat pe tot parcursul.",anim:"press"},
+      {name:"Ramat un braț",sets:2,reps:"10/braț",workSec:45,restSec:45,weight:"5 kg / braț",primary:["Spate lat"],secondary:["Biceps","Romboid"],tip:"Spatele paralel cu podeaua. Trage cotul spre tavan, nu ridica umărul.",anim:"row"},
+      {name:"Hammer Curl",sets:2,reps:"12",workSec:35,restSec:45,weight:"2 × 5 kg",primary:["Biceps","Brahial"],secondary:["Antebraț"],tip:"Palmele față în față. Coatele fixe lângă corp. 1 sec sus, 2 sec coborâre.",anim:"curl"},
+      {name:"Triceps Kickback",sets:2,reps:"12/braț",workSec:40,restSec:45,weight:"5 kg / braț",primary:["Triceps"],secondary:["Umeri post."],tip:"Aplecată în față, cotul sus lângă trunchi. Extinde complet spre spate, 2 sec înapoi.",anim:"row"},
+      {name:"Dead Bug",sets:2,reps:"8/parte",workSec:45,restSec:30,weight:"Greutatea corpului",primary:["Abdomen profund"],secondary:["Lombari"],tip:"Lombarul lipit de podea tot timpul. 3 sec per mișcare. Dacă se ridică spatele, micșorează amplitudinea.",anim:"deadbug"},
+      {name:"Side Plank",sets:2,reps:"25 sec/parte",workSec:25,restSec:30,weight:"Greutatea corpului",primary:["Oblici","Core lateral"],secondary:["Umeri","Fese"],tip:"Pe antebraț sau palmă. Șoldul sus, corp drept. Esențial pentru talie și șolduri tonifiate.",anim:"sideplan"},
+      {name:"Leg Raises",sets:2,reps:"10",workSec:35,restSec:45,weight:"Greutatea corpului",primary:["Abdomen inferior"],secondary:["Iliopsoas","Core"],tip:"Lombarul lipit de podea. Dacă e greu, îndoaie ușor genunchii. Coboară lent, controlat.",anim:"legrise"},
+    ]
+  }
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let state = {
+  workoutKey: null, exIdx: 0, setNum: 1,
+  phase: "prep", timeLeft: 5, totalTime: 5,
+  paused: false, completedEx: 0, timer: null
+};
+
+// ─── AUDIO ───────────────────────────────────────────────────────────────────
+let audioCtx = null;
+function getCtx(){ if(!audioCtx) audioCtx = new(window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function beep(freq,dur,vol){
+  try{
+    const ctx=getCtx(), o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value=freq; o.type="sine";
+    g.gain.setValueAtTime(vol||0.4, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur);
+    o.start(); o.stop(ctx.currentTime+dur);
+  }catch(e){}
+}
+function startBeep(){ beep(660,0.15); setTimeout(()=>beep(880,0.25),180); }
+function endBeep(){ beep(440,0.15); setTimeout(()=>beep(330,0.3),160); }
+function readyBeep(){ beep(660,0.1); setTimeout(()=>beep(660,0.1),150); setTimeout(()=>beep(880,0.3),300); }
+
+// ─── SCREENS ─────────────────────────────────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+function goSelect(){ clearInterval(state.timer); showScreen('select'); }
+
+// ─── BUILD SELECT ─────────────────────────────────────────────────────────────
+function buildSelect(){
+  const container = document.getElementById('workout-cards');
+  container.innerHTML = '';
+  Object.entries(WORKOUTS).forEach(([key, w]) => {
+    const btn = document.createElement('button');
+    btn.className = 'workout-card';
+    btn.innerHTML = `
+      <div class="card-stripe" style="background:${w.color}"></div>
+      <div class="card-body">
+        <div class="card-emoji">${w.emoji}</div>
+        <div class="card-name">${key}</div>
+        <div class="card-meta">${w.exercises.length} exerciții · ${w.exercises.reduce((s,e)=>s+e.sets,0)} seturi</div>
+      </div>
+      <svg viewBox="0 0 100 110" width="100" height="100">${buildFigureSVG(w.exercises[0].anim, w.accent, true)}</svg>
+    `;
+    btn.onclick = () => startWorkout(key);
+    container.appendChild(btn);
+  });
+}
+
+// ─── START WORKOUT ────────────────────────────────────────────────────────────
+function startWorkout(key){
+  state = { workoutKey:key, exIdx:0, setNum:1, phase:"prep", timeLeft:5, totalTime:5, paused:false, completedEx:0, timer:null };
+  const w = WORKOUTS[key];
+  document.getElementById('screen-workout').style.background = w.bg;
+  document.getElementById('w-progress').style.background = w.color;
+  showScreen('workout');
+  updateUI();
+  startTimer();
+}
+
+// ─── TIMER ────────────────────────────────────────────────────────────────────
+function startTimer(){
+  clearInterval(state.timer);
+  state.timer = setInterval(() => {
+    if(state.paused) return;
+    if(state.timeLeft <= 1){ advancePhase(); return; }
+    if(state.timeLeft === 4 && state.phase === "rest") readyBeep();
+    state.timeLeft--;
+    updateTimer();
+  }, 1000);
+}
+
+function advancePhase(){
+  const w = WORKOUTS[state.workoutKey];
+  const exercises = w.exercises;
+  const ex = exercises[state.exIdx];
+  if(!ex){ clearInterval(state.timer); showScreen('done'); return; }
+
+  if(state.phase === "prep"){
+    startBeep();
+    state.phase = "work"; state.timeLeft = ex.workSec; state.totalTime = ex.workSec;
+  } else if(state.phase === "work"){
+    endBeep();
+    const isLastSet = state.setNum >= ex.sets;
+    const isLastEx = state.exIdx >= exercises.length - 1;
+    if(isLastSet){
+      state.completedEx++;
+      if(isLastEx){ clearInterval(state.timer); showScreen('done'); return; }
+      state.exIdx++; state.setNum = 1;
+      if(ex.restSec > 0){ state.phase="rest"; state.timeLeft=ex.restSec; state.totalTime=ex.restSec; }
+      else { state.phase="prep"; state.timeLeft=5; state.totalTime=5; }
+    } else {
+      state.setNum++;
+      state.phase="rest"; state.timeLeft=ex.restSec; state.totalTime=ex.restSec;
+    }
+  } else {
+    startBeep();
+    const ex2 = exercises[state.exIdx];
+    state.phase="work"; state.timeLeft=ex2.workSec; state.totalTime=ex2.workSec;
+  }
+  updateUI();
+}
+
+function skipPhase(){ advancePhase(); }
+
+function togglePause(){
+  state.paused = !state.paused;
+  const w = WORKOUTS[state.workoutKey];
+  const btn = document.getElementById('btn-pause');
+  if(state.paused){
+    btn.textContent = "▶ Continuă";
+    btn.style.background = w.color; btn.style.color = "white"; btn.style.borderColor = w.color;
+  } else {
+    btn.textContent = "⏸ Pauză";
+    btn.style.background = "white"; btn.style.color = "#333"; btn.style.borderColor = w.color;
+  }
+}
+
+// ─── UPDATE UI ────────────────────────────────────────────────────────────────
+function updateUI(){
+  const w = WORKOUTS[state.workoutKey];
+  const exercises = w.exercises;
+  const ex = exercises[state.exIdx];
+  if(!ex) return;
+
+  // topbar
+  document.getElementById('w-label').textContent = w.emoji + " " + state.workoutKey;
+  document.getElementById('w-label').style.color = w.accent;
+  const totalSets = exercises.reduce((s,e)=>s+e.sets,0);
+  const doneSets = exercises.slice(0,state.exIdx).reduce((s,e)=>s+e.sets,0) + (state.setNum-1);
+  document.getElementById('w-progress').style.width = (doneSets/totalSets*100) + "%";
+
+  // exercise info
+  document.getElementById('ex-name').textContent = ex.name;
+  document.getElementById('ex-meta').style.color = w.accent;
+  document.getElementById('ex-meta').textContent = `Set ${state.setNum}/${ex.sets} · ${ex.reps} rep · ${ex.weight}`;
+
+  // figure
+  const svg = document.getElementById('figure-svg');
+  svg.innerHTML = buildFigureSVG(ex.anim, w.accent, state.phase==="rest"||state.phase==="prep");
+
+  // timer color
+  document.getElementById('timer-arc').setAttribute('stroke', state.phase==="work" ? w.color : state.phase==="rest" ? "#C8A882" : "#B0C8E0");
+
+  // muscles
+  const mt = document.getElementById('muscle-tags');
+  mt.innerHTML = ex.primary.map(m=>`<span class="muscle-tag" style="background:#2D6A56;color:white">${m}</span>`).join('')
+    + ex.secondary.map(m=>`<span class="muscle-tag" style="background:#B8DDD4;color:#1A4A3A">${m}</span>`).join('');
+
+  // tip
+  document.getElementById('ex-tip').textContent = "💡 " + ex.tip;
+
+  // pause btn color
+  const btn = document.getElementById('btn-pause');
+  btn.style.borderColor = w.color;
+  if(!state.paused){ btn.style.background="white"; btn.style.color="#333"; }
+
+  // dots
+  const dr = document.getElementById('dots-row');
+  dr.innerHTML = exercises.map((_,i) => {
+    const size = i===state.exIdx ? 14 : 9;
+    const bg = i<state.completedEx ? "#B8DDD0" : i===state.exIdx ? w.color : "#E0E0E0";
+    const border = i===state.exIdx ? `2px solid ${w.accent}` : "none";
+    return `<div class="ex-dot" style="width:${size}px;height:${size}px;background:${bg};border:${border}"></div>`;
+  }).join('') + `<div class="remaining-num" style="color:${w.accent}">${exercises.length - state.completedEx}</div>`;
+
+  // next hint
+  const hint = document.getElementById('phase-hint');
+  if(state.phase==="rest" && exercises[state.exIdx+1]){
+    hint.innerHTML = `Urmează: <strong style="color:#555">${exercises[state.exIdx+1].name}</strong>`;
+  } else if(state.phase==="prep"){
+    hint.textContent = "Pregătește-te…";
+  } else { hint.textContent = ""; }
+
+  updateTimer();
+}
+
+function updateTimer(){
+  const circ = 2*Math.PI*52;
+  const progress = state.totalTime > 0 ? 1 - state.timeLeft/state.totalTime : 0;
+  document.getElementById('timer-arc').setAttribute('stroke-dashoffset', circ*progress);
+  document.getElementById('timer-num').textContent = state.timeLeft;
+  const w = WORKOUTS[state.workoutKey];
+  const phaseColor = state.phase==="work" ? w.color : state.phase==="rest" ? "#C8A882" : "#B0C8E0";
+  document.getElementById('timer-arc').setAttribute('stroke', phaseColor);
+  const phaseEl = document.getElementById('timer-phase');
+  phaseEl.textContent = state.phase==="prep" ? "Gata?" : state.phase==="work" ? "Mergi!" : "Pauză";
+  phaseEl.style.color = state.phase==="work" ? phaseColor : "#AAA";
+}
+
+// ─── FIGURE SVG ───────────────────────────────────────────────────────────────
+function buildFigureSVG(anim, color, isRest){
+  const c = color || "#2D6A56";
+  const bodyClass = isRest ? "fig-idle" : "";
+
+  if(anim==="plank" && !isRest) return `
+    <g class="fig-plank" style="transform-origin:70px 50px">
+      <circle cx="30" cy="38" r="9" fill="${c}"/>
+      <line x1="30" y1="47" x2="110" y2="47" stroke="${c}" stroke-width="5" stroke-linecap="round"/>
+      <line x1="45" y1="47" x2="45" y2="62" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+      <line x1="90" y1="47" x2="90" y2="62" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+      <line x1="30" y1="47" x2="22" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+    </g>`;
+
+  if(anim==="sideplan" && !isRest) return `
+    <g class="fig-sideplan" style="transform-origin:70px 55px">
+      <circle cx="28" cy="40" r="9" fill="${c}"/>
+      <line x1="28" y1="49" x2="110" y2="60" stroke="${c}" stroke-width="5" stroke-linecap="round"/>
+      <line x1="55" y1="53" x2="50" y2="70" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+      <line x1="85" y1="57" x2="80" y2="74" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+      <line x1="28" y1="49" x2="18" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+    </g>`;
+
+  if(anim==="legrise" && !isRest) return `
+    <circle cx="60" cy="18" r="10" fill="${c}"/>
+    <line x1="60" y1="28" x2="60" y2="60" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+    <line x1="60" y1="40" x2="40" y2="55" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="60" y1="40" x2="80" y2="55" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="60" y1="60" x2="45" y2="80" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+    <g class="fig-legrise-leg" style="transform-origin:60px 60px">
+      <line x1="60" y1="60" x2="75" y2="40" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+      <line x1="75" y1="40" x2="90" y2="42" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+    </g>`;
+
+  if(anim==="deadbug" && !isRest) return `
+    <circle cx="65" cy="18" r="10" fill="${c}"/>
+    <line x1="65" y1="28" x2="65" y2="60" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+    <g class="fig-deadbug-arm" style="transform-origin:65px 40px">
+      <line x1="65" y1="40" x2="40" y2="30" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="40" y1="30" x2="28" y2="20" stroke="${c}" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <line x1="65" y1="40" x2="90" y2="50" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="65" y1="60" x2="50" y2="85" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+    <g class="fig-deadbug-leg" style="transform-origin:65px 60px">
+      <line x1="65" y1="60" x2="80" y2="42" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+      <line x1="80" y1="42" x2="95" y2="42" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+    </g>`;
+
+  if(anim==="clam" && !isRest) return `
+    <circle cx="28" cy="42" r="9" fill="${c}"/>
+    <line x1="28" y1="51" x2="75" y2="55" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="28" y1="51" x2="22" y2="62" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="75" y1="55" x2="72" y2="72" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+    <line x1="72" y1="72" x2="60" y2="82" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+    <g class="fig-clam-leg" style="transform-origin:75px 55px">
+      <line x1="75" y1="55" x2="100" y2="48" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+      <line x1="100" y1="48" x2="110" y2="60" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+    </g>`;
+
+  // Upright figures
+  const head = `<circle cx="50" cy="14" r="10" fill="${c}"/>`;
+  const neck = `<line x1="50" y1="24" x2="50" y2="30" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>`;
+  const torso = `<line x1="50" y1="30" x2="50" y2="65" stroke="${c}" stroke-width="4" stroke-linecap="round"/>`;
+
+  let arms="", legs="", wrapClass="", wrapOrigin="50px 60px";
+
+  if(anim==="squat"){
+    wrapClass=isRest?"fig-idle":"fig-squat"; wrapOrigin="50px 60px";
+    arms=`<line x1="50" y1="42" x2="32" y2="52" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="32" y1="52" x2="30" y2="60" stroke="${c}" stroke-width="3" stroke-linecap="round"/>
+          <line x1="50" y1="42" x2="68" y2="52" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="68" y1="52" x2="70" y2="60" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`;
+    legs=`<line x1="50" y1="65" x2="38" y2="82" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="38" y1="82" x2="32" y2="96" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="50" y1="65" x2="62" y2="82" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="62" y1="82" x2="68" y2="96" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>`;
+  } else if(anim==="press"){
+    wrapClass=isRest?"fig-idle":""; wrapOrigin="50px 60px";
+    const armClass = isRest ? "" : "fig-press";
+    arms=`<g class="${armClass}" style="transform-origin:50px 42px">
+            <line x1="50" y1="42" x2="30" y2="35" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="30" y1="35" x2="26" y2="22" stroke="${c}" stroke-width="3" stroke-linecap="round"/>
+            <line x1="50" y1="42" x2="70" y2="35" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="70" y1="35" x2="74" y2="22" stroke="${c}" stroke-width="3" stroke-linecap="round"/>
+            <line x1="20" y1="22" x2="80" y2="22" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          </g>`;
+    legs=`<line x1="50" y1="65" x2="40" y2="88" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="40" y1="88" x2="36" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="50" y1="65" x2="60" y2="88" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="60" y1="88" x2="64" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>`;
+  } else if(anim==="curl"){
+    wrapClass=isRest?"fig-idle":""; wrapOrigin="50px 60px";
+    const armClass = isRest ? "" : "fig-curl-arm";
+    arms=`<line x1="50" y1="42" x2="30" y2="52" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <g class="${armClass}" style="transform-origin:30px 52px"><line x1="30" y1="52" x2="26" y2="68" stroke="${c}" stroke-width="3" stroke-linecap="round"/></g>
+          <line x1="50" y1="42" x2="70" y2="52" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <g class="${armClass}" style="transform-origin:70px 52px"><line x1="70" y1="52" x2="74" y2="68" stroke="${c}" stroke-width="3" stroke-linecap="round"/></g>`;
+    legs=`<line x1="50" y1="65" x2="40" y2="88" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="40" y1="88" x2="36" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="50" y1="65" x2="60" y2="88" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="60" y1="88" x2="64" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>`;
+  } else if(anim==="row"){
+    wrapClass=isRest?"fig-idle":""; wrapOrigin="50px 60px";
+    const armClass = isRest ? "" : "fig-row-arm";
+    arms=`<g class="${armClass}" style="transform-origin:50px 45px">
+            <line x1="50" y1="42" x2="28" y2="48" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="28" y1="48" x2="20" y2="56" stroke="${c}" stroke-width="3" stroke-linecap="round"/>
+          </g>
+          <line x1="50" y1="42" x2="72" y2="50" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="72" y1="50" x2="76" y2="60" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`;
+    legs=`<line x1="50" y1="65" x2="38" y2="85" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="38" y1="85" x2="34" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="50" y1="65" x2="62" y2="85" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="62" y1="85" x2="66" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>`;
+  } else if(anim==="deadlift"){
+    wrapClass=isRest?"fig-idle":"fig-deadlift"; wrapOrigin="50px 55px";
+    arms=`<line x1="50" y1="42" x2="32" y2="55" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="32" y1="55" x2="28" y2="70" stroke="${c}" stroke-width="3" stroke-linecap="round"/>
+          <line x1="50" y1="42" x2="68" y2="55" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="68" y1="55" x2="72" y2="70" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`;
+    legs=`<line x1="50" y1="65" x2="40" y2="88" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="40" y1="88" x2="36" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="50" y1="65" x2="60" y2="88" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="60" y1="88" x2="64" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>`;
+  } else if(anim==="lunge"){
+    wrapClass=isRest?"fig-idle":"fig-lunge"; wrapOrigin="50px 60px";
+    arms=`<line x1="50" y1="42" x2="32" y2="55" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="32" y1="55" x2="28" y2="65" stroke="${c}" stroke-width="3" stroke-linecap="round"/>
+          <line x1="50" y1="42" x2="68" y2="55" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="68" y1="55" x2="72" y2="65" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`;
+    legs=`<line x1="50" y1="65" x2="34" y2="80" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="34" y1="80" x2="28" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="50" y1="65" x2="66" y2="76" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="66" y1="76" x2="78" y2="86" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>`;
+  } else if(anim==="walk"){
+    wrapClass=isRest?"fig-idle":""; wrapOrigin="50px 60px";
+    const walkClass = isRest ? "" : "fig-walk-arm";
+    const walkLegClass = isRest ? "" : "fig-walk-leg";
+    arms=`<g class="${walkClass}" style="transform-origin:50px 42px">
+            <line x1="50" y1="42" x2="30" y2="56" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="50" y1="42" x2="70" y2="50" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          </g>`;
+    legs=`<g class="${walkLegClass}" style="transform-origin:50px 65px">
+            <line x1="50" y1="65" x2="36" y2="84" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+            <line x1="36" y1="84" x2="30" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="50" y1="65" x2="64" y2="82" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+            <line x1="64" y1="82" x2="70" y2="98" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          </g>`;
+  } else if(anim==="lateral"){
+    wrapClass=isRest?"fig-idle":""; wrapOrigin="50px 60px";
+    const latClass = isRest ? "" : "fig-lateral-arm";
+    arms=`<g class="${latClass}" style="transform-origin:50px 42px">
+            <line x1="50" y1="42" x2="28" y2="55" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="50" y1="42" x2="72" y2="55" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          </g>`;
+    legs=`<line x1="50" y1="65" x2="38" y2="88" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="38" y1="88" x2="32" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="50" y1="65" x2="62" y2="88" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="62" y1="88" x2="68" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>`;
+  } else {
+    wrapClass=isRest?"fig-idle":""; wrapOrigin="50px 60px";
+    arms=`<line x1="50" y1="42" x2="30" y2="55" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="30" y1="55" x2="26" y2="68" stroke="${c}" stroke-width="3" stroke-linecap="round"/>
+          <line x1="50" y1="42" x2="70" y2="55" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="70" y1="55" x2="74" y2="68" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`;
+    legs=`<line x1="50" y1="65" x2="40" y2="88" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="40" y1="88" x2="36" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="50" y1="65" x2="60" y2="88" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+          <line x1="60" y1="88" x2="64" y2="100" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/>`;
+  }
+
+  return `<g class="${wrapClass}" style="transform-origin:${wrapOrigin}">${head}${neck}${torso}${arms}${legs}</g>`;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+buildSelect();
+</script>
+</body>
+</html>
